@@ -4,7 +4,7 @@ services:
   #PHP Service
   app:
     build:
-      context: .
+      context: ./docker
       dockerfile: Dockerfile
     image: digitalocean.com/php
     container_name: app
@@ -16,7 +16,7 @@ services:
     working_dir: /var/www
     volumes:
       - ./app:/var/www
-      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
     networks:
       - app-network
 
@@ -31,7 +31,7 @@ services:
       - "443:443"
     volumes:
       - ./app:/var/www
-      - ./nginx/conf.d/:/etc/nginx/conf.d/
+      - ./docker/nginx/conf.d/:/etc/nginx/conf.d/
     networks:
       - app-network
 
@@ -49,9 +49,9 @@ services:
 #      SERVICE_TAGS: dev
 #      SERVICE_NAME: mysql
     volumes:
-      - ./db_dump:/docker-entrypoint-initdb.d
+      - ./docker/mysql/db_dump:/docker-entrypoint-initdb.d
       - dbdata:/var/lib/mysql/
-      - ./mysql/my.cnf:/etc/mysql/my.cnf
+      - ./docker/mysql/my.cnf:/etc/mysql/my.cnf
     networks:
       - app-network
 
