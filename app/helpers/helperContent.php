@@ -31,7 +31,7 @@ if (isset($_REQUEST['execFunc'])) {
 }
 
 /**
-*Функция считвыает запрашиваемый URI и формирует
+*Функция считывает запрашиваемый URI и формирует
 * контент страницы исходя из структуры /data/route_array.php
 */
 function route ()
@@ -64,15 +64,18 @@ function route ()
 }
 
 /**
-*Функция принимает через супермассив $_REQUEST
+*Функция принимает через супермассив $_POST
 * данные нового заказа и добавляет заказ в БД
 * в случае ошибки направляет json с ошибкой
 */
 function newOrder()
 {
-    $productId = $_REQUEST['prod_id'];
-    $data = array_diff($_REQUEST, [$_REQUEST['execFunc'], $_REQUEST['prod_id']]);
+    $productId = $_POST['prod_id'];
+
+    $data = array_diff_key($_POST, ['execFunc' => '', 'prod_id' => '']);
+
     $data = validateUserData($data);
+
     if (array_key_exists('error_fields', $data)) {
         die(json_encode(['error' => $data['error_fields']]));
     } elseif (array_key_exists('safe_data', $data)) {
@@ -95,6 +98,7 @@ function newOrder()
         }
         $data['safe_data']['created_at'] = date(DB_DATE_FORMAT);
         $data['safe_data']['status'] = '0';
+
         \helperDb\getQuery(DB_ADD_NEW_ORDER, $data['safe_data']);
 
         $orderId = \helperDb\getQuery(DB_GET_LAST_ID)[0]["LAST_INSERT_ID()"];
@@ -111,7 +115,7 @@ function newOrder()
 * @param string $validKey - в случае если есть вложенный массив с именем, валидация происходит по этому ключу
 * @param array $postfilter - массив с фильтрами валидации
 * @param array $errorfields - массив с ошибками, возникшими в валидации - в случае если происходит рекурсивный вызов
-* @return array массив с валидными данными, либо массив с наименованием полей
+* @return array - массив с валидными данными, либо массив с наименованием полей
 * в которых возникла ошибка при валидации и фильтрации
 */
 function validateUserData(
@@ -173,7 +177,7 @@ function uploadFile($file)
     }
 
     if (!$isCorrectFileType) {
-        $errorMsg .= ' Файл ' . $file['name'][$i] . ' не является изображением';
+        $errorMsg .= ' Файл ' . $file['name'] . ' не является изображением';
     }
 
     if ($errorMsg !== '') return ['file_error' => $errorMsg];
@@ -244,7 +248,7 @@ function getProudctInfo()
 }
 
 /**
-*Функция принимает данные из супермассива $_REQUEST, $_FILES делает валидацию данных
+*Функция принимает данные из супермассива $_POST, $_FILES делает валидацию данных
 * и изменят данные о товаре либо добавлеяет новый товар в зависимости от $action
 * @param string $action принимает аргумент 'addProduct' для добавления товара, 'changeProduct' для изменения товара
 */
@@ -255,7 +259,7 @@ function manageProduct(string $action)
         $uploadResult = (uploadFile($_FILES['product-photo']));
     }
 
-    $rowData = validateUserData($_REQUEST);
+    $rowData = validateUserData($_POST);
 
     if (isset($rowData['error_fields']) || isset($uploadResult['file_error'])) {
         die(json_encode(
@@ -266,16 +270,18 @@ function manageProduct(string $action)
         ));
     } elseif (array_key_exists('safe_data', $rowData)) {
         $categories = $rowData['safe_data']['category'];
-        $data = array_diff(
+        $data = array_diff_key(
             $rowData['safe_data'],
             [
-                $rowData['safe_data']['execFunc'],
-                $rowData['safe_data']['category'],
+                'execFunc' => '',
+                'category' => ''
             ]
         );
+
         if ($action == 'addProduct') {
         	addProduct($data, $uploadResult, $categories);
         } else if ($action == 'changeProduct') {
+            $data['product_id'] = $rowData['safe_data']['product_id'];
         	changeProduct($data, $uploadResult, $categories);
         }
     }
@@ -289,10 +295,10 @@ function manageProduct(string $action)
 */
 function changeProduct(array $data, $uploadResult, array $categories)
 {
+
 	if (!is_null($uploadResult)) {
         $data['img_path'] = $uploadResult['file_path'];
     }
-
 
     $sql = 'UPDATE products SET ';
     $endSql = ' WHERE id = :product_id';

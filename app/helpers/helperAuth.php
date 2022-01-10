@@ -39,19 +39,9 @@ function authController()
                     'user_group' => $query['group'],
                     'user_email' => $query['email']
                 ];
-
-                //updateMenu();
                 setcookie('user_email', $email, time() + 60 * 60 * 24 * 30, '/');
-                // $msg = 'Добро пожаловать, ' . $query['name'];
-
-                // ob_start();
-                // \helperContent\showMenu();
-                // $newMenu = ob_get_contents();
-                //ob_end_clean();
                 $rights = $query['group'];
                  die(json_encode(['success' => $rights]));
-                //header("Location: http://localhost/admin/?orders=yes"); //http://localhost/?execFunc=unAuth
-                //exit();    // прерываем работу скрипта, чтобы забыл о прошлом
 
             } else {
                 die(json_encode(['error' => 'Некорректный логин и(или) пароль!']));
